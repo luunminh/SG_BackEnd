@@ -21,7 +21,9 @@ let users = [
 
 // middleware
 function validate(req, res, next) {
-    if ((req.body.fullname).length > 0 && (Number.parseInt(req.body.age))) {
+    const nums = /^\d+$/
+    const specialChars = /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
+    if (!specialChars.test(req.body.fullname) && (Number.parseInt(req.body.age)) && !nums.test(req.body.fullname)) {
         next()
     } else {
         res.sendStatus(400)
