@@ -24,7 +24,8 @@ userRouter.get('/', (req, res) => {
         users = JSON.parse(JSON.stringify(rs))
         console.log(users);
     })
-    res.sendStatus(200).json(users)
+    res.sendStatus(200)
+    // res.sendStatus(200).json(users)
 })
 
 userRouter.get(`/:id`, (req, res) => {

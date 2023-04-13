@@ -9,7 +9,6 @@ app.use(bodyParser.json())
 
 
 
-
 app.use('/users', userRoute)
 
 app.listen(port, () => {
