@@ -11,7 +11,9 @@ connection.query('SELECT * from Users', (err, rs) => {
 
 // middleware
 function validate(req, res, next) {
-    if ((req.body.fullname).length > 0 && (Number.parseInt(req.body.age)) && Boolean(req.body.gender)) {
+    const regex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s\W|_]+$/;
+    const user = req.body
+    if (!regex.test(user.fullname) && (Number.parseInt(req.body.age)) && (req.body.gender === 'true' || req.body.gender === 'false')) {
         next()
     } else {
         res.sendStatus(400)
