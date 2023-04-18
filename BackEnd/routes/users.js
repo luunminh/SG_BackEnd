@@ -1,6 +1,7 @@
 const express = require('express');
 const userRouter = express.Router();
 const connection = require('../database/connection')
+const validation = require("./middleware/validation.js");
 
 let users = []
 connection.query('SELECT * from Users', (err, rs) => {
@@ -9,16 +10,6 @@ connection.query('SELECT * from Users', (err, rs) => {
 })
 
 
-// middleware
-function validate(req, res, next) {
-    const regex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s\W|_]+$/;
-    const user = req.body
-    if (!regex.test(user.fullname) && (Number.parseInt(req.body.age)) && (req.body.gender === 'true' || req.body.gender === 'false')) {
-        next()
-    } else {
-        res.sendStatus(400)
-    }
-}
 
 
 userRouter.get('/', (req, res) => {
@@ -58,7 +49,7 @@ userRouter.put('/user/:id', (req, res) => {
 
 
 //add
-userRouter.post('/user', validate, (req, res) => {
+userRouter.post('/user', validation, (req, res) => {
     const id = users[users.length - 1].id + 1
     const fullname = req.body.fullname
     const age = Number.parseInt(req.body.age)
