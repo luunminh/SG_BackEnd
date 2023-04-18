@@ -1,10 +1,7 @@
 const express = require('express');
 var bodyParser = require('body-parser')
 const userRouter = express.Router();
-
-
-userRouter.use(bodyParser.urlencoded({ extended: false }))
-userRouter.use(bodyParser.json())
+const validation = require("./middleware/validation.js");
 
 let users = [
     {
@@ -19,29 +16,19 @@ let users = [
     }
 ]
 
-// middleware
-function validate(req, res, next) {
-    const nums = /^\d+$/
-    const specialChars = /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
-    if (!specialChars.test(req.body.fullname) && (Number.parseInt(req.body.age)) && !nums.test(req.body.fullname)) {
-        next()
-    } else {
-        res.sendStatus(400)
-    }
-}
+
 
 
 userRouter.get('/', (req, res) => {
-    res.sendStatus(200)
-    res.json(users)
-    console.log(res.status)
+    res.status(200).send(users)
+    // console.log(res.status)
 })
 
 userRouter.get(`/:id`, (req, res) => {
     const id = req.params.id
-    res.sendStatus(204)
-    res.json(users.filter(item => item.id === Number.parseInt(id)))
-    console.log(res.status)
+    const user = users.filter(item => item.id === Number.parseInt(id))
+    res.status(204).send(user)
+    // console.log(res.status)
 })
 
 // update
@@ -50,26 +37,23 @@ userRouter.put('/user/:id', (req, res) => {
     const fullname = req.body.fullname
     const age = Number.parseInt(req.body.age)
     users = users.map(item => (item.id === Number.parseInt(id)) ? { id, fullname, age } : item)
-    res.sendStatus(204)
-    res.json(users)
+    res.status(204).json("204 (No content)");
 })
 
 
 //add
-userRouter.post('/user', validate, (req, res) => {
+userRouter.post('/user', validation, (req, res) => {
     const id = users[users.length - 1].id + 1
     const fullname = req.body.fullname
     const age = Number.parseInt(req.body.age)
     users.push({ id, fullname, age })
-    res.sendStatus(201)
-    res.json(users)
+    res.status(201).json("201 (Created)");
 })
 
 userRouter.delete('/user/:id', (req, res) => {
     const id = Number.parseInt(req.params.id)
     users = users.filter(item => item.id !== Number.parseInt(id))
-    res.sendStatus(204)
-    res.json(users)
+    res.status(204).json("204 (No content)");
 
 })
 

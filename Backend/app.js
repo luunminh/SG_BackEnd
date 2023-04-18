@@ -4,9 +4,7 @@ const port = 3000
 const userRoute = require('./routes/users.js')
 var bodyParser = require('body-parser')
 
-// config de nhan gia tri tu client gui len thong qua body
 app.use(bodyParser.urlencoded({ extended: false }))
-// parse application/json
 app.use(bodyParser.json())
 
 
