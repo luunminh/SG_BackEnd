@@ -7,8 +7,8 @@ var bodyParser = require('body-parser')
 
 
 app.use(bodyParser.urlencoded({ extended: false }))
-// parse application/json
 app.use(bodyParser.json())
+
 const secret = 'sewy'
 
 const userDB = [
@@ -32,32 +32,60 @@ const userDB = [
 
 app.post('/auth/login', (req, res) => {
     const username = req.body.username
-    // const {
-    //     username,
-    //     password
-    // } = req.body
+    const password = req.body.password
+
     const targetUser = userDB.find(user => user.username === username)
 
+    if (!targetUser) {
+        return res.status(400).json({
+            message: 'User not found',
+        });
+    }
+
     if (targetUser.password === password) {
-        // const jwt = 
+        const jwt = jsonwebtoken.sign({
+            username: targetUser.username,
+            password: targetUser.email,
+            age: targetUser.age
+        }, secret, {
+            algorithm: 'HS256',
+            expiresIn: '1h'
+        })
+
+        return res.status(200).json({
+            data: jwt,
+            message: 'Login success',
+        });
     }
 
 
-    res.json({ targetUser })
+    return res.status(401).json({
+        message: 'Invalid credentials'
+    })
 })
 
-app.get('/users/:id/balance', (req, res) => {
+app.get('/balance', (req, res) => {
+    const username = req.query.username;
+
     const authorization = req.headers.authorization;
     const token = authorization.substring(7)
 
-    console.log({ token })
+    try {
+        const isTokenValid = jsonwebtoken.verify(token, secret)
+
+        if (isTokenValid.username == username) {
+            const user = dbs.find(u => u.username === username);
+
+            return res.status(200).json({
+                balance: user.balance,
+            });
+        }
+    } catch (error) {
+        return res.status(401).json({
+            message: error.message,
+        });
+    }
 })
-
-
-
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
-
 
 
 // app.use('/users', userRoute)
