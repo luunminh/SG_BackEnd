@@ -41,6 +41,7 @@ userRouter.put('/user/:id', updateUserValidation, async (req, res) => {
         const authorization = req.headers.authorization;
         const token = authorization.substring(7)
         const isValidToken = jsonwebtoken.verify(token, secret)
+        console.log({ isValidToken });
         if (isValidToken.id == id) {
             const isSuccess = await create({
                 db: connection,
