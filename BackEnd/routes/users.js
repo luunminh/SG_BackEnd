@@ -1,84 +1,72 @@
 const express = require('express');
+const jsonwebtoken = require('jsonwebtoken')
 const userRouter = express.Router();
-const connection = require('../database/connection')
+const { updateUserValidation } = require("../middleware/validation");
+const connection = require("../database/connection")
+const { getOne, create, executeQuery, getMany } = require('../database/query')
+const { secret } = require("./auth.js")
 
-let users = []
-connection.query('SELECT * from Users', (err, rs) => {
-    users = JSON.parse(JSON.stringify(rs))
-    console.log(users);
-})
-
-
-// middleware
-function validate(req, res, next) {
-    if ((req.body.fullname).length > 0 && (Number.parseInt(req.body.age)) && Boolean(req.body.gender)) {
-        next()
-    } else {
-        res.sendStatus(400)
-    }
-}
-
-
-userRouter.get('/', (req, res) => {
-    connection.query('SELECT * from Users', (err, rs) => {
-        users = JSON.parse(JSON.stringify(rs))
-        console.log(users);
+userRouter.get('/', async (req, res) => {
+    const users = await getMany({
+        db: connection,
+        query: "SELECT * FROM users;",
+        params: []
     })
-    res.sendStatus(200)
-    // res.sendStatus(200).json(users)
-})
-
-userRouter.get(`/:id`, (req, res) => {
-    const id = req.params.id
-    connection.query(`SELECT * from Users where id='${id}'`, (err, rs) => {
-        let user = JSON.parse(JSON.stringify(rs))
-        console.log(user);
-        users = [...users, user]
-    })
+    console.log(users)
     res.sendStatus(200).json(users)
+})
+
+userRouter.get(`/:id`, async (req, res) => {
+    const id = req.params.id
+    const user = await getOne({
+        db: connection,
+        query: "SELECT * FROM users where id=?",
+        params: [id]
+    })
+    console.log(user)
+    res.sendStatus(200).json(user)
 
 })
 
 // update
-userRouter.put('/user/:id', (req, res) => {
-    const id = Number.parseInt(req.params.id)
-    const fullname = req.body.fullname
-    const age = Number.parseInt(req.body.age)
-    const gender = Boolean(req.body.gender)
-    connection.query(`UPDATE Users SET fullname ='${fullname}', age=${age}, gender=${gender} WHERE id=${id}`, (err, rs) => {
-        console.log(err);
-        console.log(rs);
-    })
-    users = users.map(item => (item.id === Number.parseInt(id)) ? { id, fullname, age, gender } : item)
-    res.sendStatus(204)
-    res.json(users)
+userRouter.put('/user/:id', updateUserValidation, async (req, res) => {
+    const {
+        name,
+        gender,
+        age,
+    } = req.body;
+    const id = req.params.id
+
+    try {
+        const authorization = req.headers.authorization;
+        const token = authorization.substring(7)
+        const isValidToken = jsonwebtoken.verify(token, secret)
+        if (isValidToken.id == id) {
+            const isSuccess = await create({
+                db: connection,
+                query: "UPDATE users set name=?, age=?, gender=? where id=?",
+                params: [name, age, gender, id]
+            })
+            console.log({ isSuccess });
+            if (isSuccess) {
+                return res.sendStatus(204).json({
+                    message: "Update successfully"
+                })
+
+            } else {
+                return res.sendStatus(400)
+            }
+
+        }
+    } catch (err) {
+        console.log({ err });
+        return res.status(401).json({
+            message: err.message,
+        });
+
+    }
 })
 
-
-//add
-userRouter.post('/user', validate, (req, res) => {
-    const id = users[users.length - 1].id + 1
-    const fullname = req.body.fullname
-    const age = Number.parseInt(req.body.age)
-    const gender = Boolean(req.body.gender)
-    console.log({ fullname, age, gender });
-    connection.query(`insert into Users(fullname, age, gender) values ('${fullname}', ${age}, ${gender})`, (err, rs) => {
-        console.log(err);
-        console.log(rs);
-        users = [...users, { id, fullname, age, gender }]
-    })
-    res.sendStatus(201)
-})
-
-// del
-userRouter.delete('/user/:id', (req, res) => {
-    const id = Number.parseInt(req.params.id)
-    connection.query(`DELETE FROM Users WHERE id=${id}`, (err, rs) => {
-        console.log(rs);
-    })
-    users = users.filter(item => item.id !== Number.parseInt(id))
-    res.sendStatus(204)
-})
 
 
 
