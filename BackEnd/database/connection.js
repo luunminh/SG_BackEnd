@@ -1,6 +1,6 @@
 const mysql = require('mysql')
 require('dotenv').config({ path: '../.env' })
-console.log(process.env.DB_HOST);
+// console.log(process.env.DB_HOST);
 connection = mysql.createConnection({
     // host: process.env.DB_HOST,
     // user: process.env.DB_USER,
@@ -12,6 +12,6 @@ connection = mysql.createConnection({
     password: '110163',
     database: 'day7',
 })
+console.log(connection);
 
-
-module.exports = connection
+module.exports = { connection }

@@ -2,7 +2,7 @@ const express = require('express');
 const authRouter = express.Router();
 const jsonwebtoken = require('jsonwebtoken')
 const { userValidation } = require('../middleware/validation')
-const connection = require('../database/connection');
+const { connection } = require('../database/connection');
 const { hashPassword, comparePassword } = require('../helpers/hash');
 const { getOne, create, executeQuery, getMany } = require('../database/query')
 const { mailService } = require('../services/mail.service')
@@ -152,9 +152,9 @@ authRouter.post('/reset-password', async (req, res) => {
     } = req.body
 
     const user = await getOne({
-        db,
+        db: connection,
         query: 'SELECT * FROM users WHERE email = ? AND passwordResetToken = ? AND passwordResetExpiration >= ?',
-        params: [email, passwordResetToken, new Date(Date.now())],
+        params: [email, token, new Date(Date.now())],
     });
 
     if (!user) {
@@ -163,7 +163,7 @@ authRouter.post('/reset-password', async (req, res) => {
         });
     }
 
-    
+
 
     return res.status(200).json({
         message: 'success',
