@@ -36,5 +36,16 @@ const updateUserValidation = (req, res, next) => {
     next()
 }
 
-module.exports = { updateUserValidation, userValidation }
+const authenticate = async (req, res, next)=>{
+    await verifyToken(req, res, () =>{
+        if(req.user.id === parseInt( req.params.id)|| req.user.isAdmin){
+            next()
+        }
+        else{
+            return res.status(403).json('Not allowed!')
+        }
+    }) 
+}
+
+module.exports = { updateUserValidation, userValidation, authenticate }
 

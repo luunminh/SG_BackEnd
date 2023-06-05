@@ -6,28 +6,28 @@ const { connection } = require('../database/connection');
 const { hashPassword, comparePassword } = require('../helpers/hash');
 const { getOne, create, executeQuery, getMany } = require('../database/query')
 const { mailService } = require('../services/mail.service')
-const secret = "sewy"
+const crypto = require('crypto');
 
 authRouter.post('/register', userValidation, async (req, res) => {
-    const {
-        username,
-        password,
-        name,
-        gender,
-        age,
-        email
-    } = req.body;
+
+    const user = {
+        username: req.body.username,
+        password: hashedPassword,
+        email: req.body.email,
+        gender: req.body.gender,
+        name: req.body.name,
+        age: req.body.age,
+        salt: salt,
+        createAt: new Date(Date.now()),
+        isAdmin: req.body.isAdmin
+    }
 
 
 
     // check if username is exist
-    const user = await getOne({
-        db: connection,
-        query: "SELECT * FROM users where username =?",
-        params: username
-    })
+    const existedUser = await db.select().from('users').where('username', req.body.username).first()
 
-    if (user) {
+    if (existedUser) {
         return res.status(400).json({
             message: 'User already exist!!!',
         });
@@ -37,21 +37,18 @@ authRouter.post('/register', userValidation, async (req, res) => {
 
 
 
-    await executeQuery({
-        db: connection,
-        query: `insert into users(username, name, password, salt, email, age, gender) values ( ?, ?, ?, ?, ?, ?, ? )`,
-        params: [username, name, hashedPassword, salt, email, age, gender]
-    })
+    await db.insert(user).into('users')
 
 
     const jwt = jsonwebtoken.sign({
         username,
-        name,
         password: hashedPassword,
         salt,
         email,
         age,
-        gender
+        gender,
+        createAt: new Date(Date.now()),
+        isAdmin: req.body.isAdmin
     }, secret)
 
 
@@ -66,12 +63,7 @@ authRouter.post('/login', async (req, res) => {
     const { username } = req.body
     const hashPass = req.body.password
 
-    const user = await getOne({
-        db: connection,
-        query: "SELECT * FROM users WHERE username = ?",
-        params: [username],
-    })
-
+    const user = await db.select('*').from('users').where('username', username).first()
 
     if (!user) {
         return res.status(400).json({
@@ -113,7 +105,7 @@ authRouter.post('/forgot-password', async (req, res) => {
         });
     }
 
-    const token = "123tacungthoitatnen"
+    const token = crypto.randomBytes(16).toString('hex');
     const isSuccess = await create({
         db: connection,
         query: "UPDATE users set passwordResetToken =?, passwordResetExpiration=? where email=?",
@@ -137,9 +129,6 @@ authRouter.post('/forgot-password', async (req, res) => {
     } else {
         return res.sendStatus(400)
     }
-
-
-
 })
 
 
