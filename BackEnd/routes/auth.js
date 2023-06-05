@@ -25,7 +25,7 @@ authRouter.post('/register', userValidation, async (req, res) => {
 
 
     // check if username is exist
-    const existedUser = await db.select().from('users').where('username', req.body.username).first()
+    const existedUser = await connection.select().from('users').where('username', req.body.username).first()
 
     if (existedUser) {
         return res.status(400).json({
@@ -37,7 +37,7 @@ authRouter.post('/register', userValidation, async (req, res) => {
 
 
 
-    await db.insert(user).into('users')
+    await connection.insert(user).into('users')
 
 
     const jwt = jsonwebtoken.sign({
@@ -63,7 +63,7 @@ authRouter.post('/login', async (req, res) => {
     const { username } = req.body
     const hashPass = req.body.password
 
-    const user = await db.select('*').from('users').where('username', username).first()
+    const user = await connection.select('*').from('users').where('username', username).first()
 
     if (!user) {
         return res.status(400).json({

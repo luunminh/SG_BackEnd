@@ -4,13 +4,12 @@ const userRouter = express.Router();
 const { updateUserValidation, userValidation, authenticate } = require("../middleware/validation");
 const connection = require("../database/connection")
 const { getOne, create, executeQuery, getMany } = require('../database/query')
-const { secret } = require("./auth.js")
 
 
 
 
 userRouter.post("/create", authenticate, userValidation, async (req, res) => {
-    const existedUsername = await db
+    const existedUsername = await connection
         .select()
         .from("users")
         .where("username", req.body.username)
@@ -18,18 +17,18 @@ userRouter.post("/create", authenticate, userValidation, async (req, res) => {
     if (!existedUsername) {
         const { salt, hashedPassword } = hashPassword(req.body.password);
         user = {
-        username: req.body.username,
-        password: hashedPassword,
-        email: req.body.email,
-        gender: req.body.gender,
-        name: req.body.name,
-        age: parseInt(req.body.age),
-        salt: salt,
-        createAt: new Date(Date.now()),
-        createBy: req.user.id,
-        isAdmin: req.body.isAdmin,
+            username: req.body.username,
+            password: hashedPassword,
+            email: req.body.email,
+            gender: req.body.gender,
+            name: req.body.name,
+            age: parseInt(req.body.age),
+            salt: salt,
+            createAt: new Date(Date.now()),
+            createBy: req.user.id,
+            isAdmin: req.body.isAdmin,
         };
-        await db.insert(user).into("users");
+        await connection.insert(user).into("users");
         return res.status(201).json({ message: "created successful" });
     }
     return res.status(200).json({ message: "Username already exists" });
@@ -39,7 +38,7 @@ userRouter.post("/create", authenticate, userValidation, async (req, res) => {
 
 // update
 userRouter.put('/user/:id', authenticate, async (req, res) => {
-    await db("users").where("id", req.params.id).update({
+    await connection("users").where("id", req.params.id).update({
         name: req.body.name,
         age: req.body.age,
         gender: req.body.gender,
@@ -50,28 +49,28 @@ userRouter.put('/user/:id', authenticate, async (req, res) => {
 
 //delete
 userRouter.delete("/:id", authenticate, async (req, res) => {
-    await db("users").where("id", req.params.id).del();
+    await connection("users").where("id", req.params.id).del();
     return res.status(200).json({ message: "delete successful" });
 });
 
 
 
-// pagination / search by name
+// pagination | search by name
 userRouter.get("/filter-users", async (req, res) => {
     let page_size = req.query.page_size,
         page_index = req.query.page_index,
         name = req.body.name ? req.body.name : null;
     const condition = (builder) => {
         if (name) {
-        builder.where("name", "like", `%${name}%`);
+            builder.where("name", "like", `%${name}%`);
         }
     };
     let pagination = {};
     if (page_index < 1) page_index = 1;
     let offset = (page_index - 1) * page_size;
     return Promise.all([
-        db.count("* as count").from("users").where(condition).first(),
-        db.select("*").from("users").where(condition).offset(offset).limit(page_size),
+        connection.count("* as count").from("users").where(condition).first(),
+        connection.select("*").from("users").where(condition).offset(offset).limit(page_size),
     ]).then(([total, rows]) => {
         let count = total.count;
         let rows = rows;
